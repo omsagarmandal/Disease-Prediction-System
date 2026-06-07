@@ -1,7 +1,7 @@
 # Day 3 — Week 1
 
 **Intern:** Suman  
-**Date:** YYYY-MM-DD  
+**Date:** 2026-06-07  
 **Hours (Clockify):** 0
 
 ## Topics covered
