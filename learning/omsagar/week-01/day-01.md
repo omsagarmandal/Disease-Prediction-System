@@ -1,34 +1,34 @@
 # Day 1 — Week 1
 
 **Intern:** Omsagar  
-**Date:** YYYY-MM-DD  
+**Date:** 2026-06-04  
 **Hours (Clockify):** 0
 
 ## Topics covered
 
-- Python environment setup (`venv`, `pip`)
-- Jupyter basics
-- NumPy arrays and basic operations
+*   Python environment setup (`venv`, `pip`)
+*   Python: Basics, Lists
 
 ## Resources used
 
-- [NumPy quickstart](https://numpy.org/doc/stable/user/quickstart.html)
-- `learning/CurioTech_AIML_Internship_Month1_Plan.pdf` — Week 1, Day 1
+*   [CodeWithHarry - Python for Beginners Full Course](https://www.youtube.com/playlist?list=PLu0W_9lII9agwh1XjRt242xIpHhPT2llg)
+*   `learning/CurioTech_AIML_Internship_Month1_Plan.pdf` — Week 1, Day 1
 
 ## What I did today
 
-- Created virtual environment and installed `numpy`, `pandas`, `jupyter`
-- Completed notebook exercises on array creation, indexing, and broadcasting
+*   Created virtual environment, managed dependencies using pip
+*   practiced Python basics and lists.  
+     
 
 ## Key takeaways
 
-- NumPy arrays are faster than Python lists for numerical work
-- Shape mismatches cause most early bugs — always print `.shape`
+*   \`venv\` keeps project packages organized and separate.
+*   Python lists are flexible and great for storing collections of data.
 
 ## Questions / blockers
 
-- None
+*   None
 
 ## Tomorrow
 
-- Pandas: `read_csv`, filtering, and basic EDA on a sample dataset
+*   Python:  Loops , functions
