@@ -1,7 +1,7 @@
 # Day 4 — Week 1
 
 **Intern:** Omsagar  
-**Date:** YYYY-MM-DD  
+**Date:** 2026-06-07  
 **Hours (Clockify):** 0
 
 ## Topics covered
