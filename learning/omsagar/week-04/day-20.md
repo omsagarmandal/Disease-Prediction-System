@@ -6,24 +6,25 @@
 
 ## Topics covered
 
-- 
+\-
 
 ## Resources used
 
-- `learning/CurioTech_AIML_Internship_Month1_Plan.pdf`
+*   [CodeWithHarry - Python Data Science Tutorials](https://www.youtube.com/playlist?list=PLu0W_9lII9agK8pojo23OHiNz3Jm6VQCH)
+*   `learning/CurioTech_AIML_Internship_Month1_Plan.pdf`
 
 ## What I did today
 
-- 
+\-
 
 ## Key takeaways
 
-- 
+\-
 
 ## Questions / blockers
 
-- 
+\-
 
 ## Tomorrow
 
-- 
+\-
