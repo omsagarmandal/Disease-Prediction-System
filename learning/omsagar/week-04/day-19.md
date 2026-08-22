@@ -1,33 +1,63 @@
-# Day 19 — Week 4
+# Project 01 — Data Exploration
 
 **Intern:** Omsagar  
-**Date:** 2026-06-28  
-**Hours (Clockify):** 0
+**Status:** In progress  
+**Started:** YYYY-MM-DD
 
-## Topics covered
+## Objective
 
-*   Introduction to Natural Language Processing (NLP) 
-*   Text preprocessing (Tokenization, Stopwords) and TF-IDF vectorization
+Explore a tabular dataset end-to-end: load, clean, visualize, and summarize insights in a reproducible notebook or script.
 
-## Resources used
+## Dataset
 
-*   [CodeWithHarry - Python Data Science Tutorials](https://www.youtube.com/playlist?list=PLu0W_9lII9agK8pojo23OHiNz3Jm6VQCH)
-*   `learning/CurioTech_AIML_Internship_Month1_Plan.pdf`
+*   **Name:** (e.g. Titanic / Iris / mentor-provided CSV)
+*   **Source:** (URL or path — do not commit large private data)
+*   **Target variable (if any):**
 
-## What I did today
+## Setup
 
-*   Cleaned raw text data and converted words into numbers using TF-IDF.
-*   Built a movie review sentiment classifier using Logistic Regression on IMDB data.
+```
+python -m venv venv
+# Windows: venv\Scripts\activate
+# macOS/Linux: source venv/bin/activate
+pip install -r requirements.txt
+jupyter lab
+```
 
-## Key takeaways
+## Project layout
 
-*   Models cannot read raw text, so text vectorization is completely necessary. 
-*   Tokenization and removing stopwords help filter out useless words.
+```
+project-01/
+├── README.md          ← this file
+├── src/               ← notebooks and Python scripts
+├── backend/           ← optional API (later weeks)
+└── screenshots/       ← plots and result captures
+```
 
-## Questions / blockers
+## Progress
 
-None
+*   Data loaded and schema documented
+*   Missing values and outliers handled (choices documented)
+*   At least 5 visualizations with short interpretations
+*   Written summary of findings
+*   Mentor review PR opened
 
-## Tomorrow
+## How to run
 
-Mini-Project Day 1: Project planning and data collection.
+```
+# Example
+jupyter lab src/eda.ipynb
+```
+
+## Results (fill as you go)
+
+| Item | Notes |
+| --- | --- |
+| Rows / columns |   |
+| Main insights |   |
+| Screenshots | `screenshots/` |
+
+## Links
+
+*   PR:
+*   Related learning log: `learning/omsagar/week-01/day-XX.md`
