@@ -1,19 +1,18 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import joblib
 import re
-import pandas as pd
-import matplotlib.pyplot as plt
-from nltk.stem import WordNetLemmatizer
+import time
 from nltk.corpus import stopwords
-from lime.lime_text import LimeTextExplainer
+from nltk.stem import WordNetLemmatizer
 
-lemmatizer = WordNetLemmatizer()
+st.set_page_config(page_title="CineSense", page_icon="🎬", layout="wide")
+
+model = joblib.load('../models/sentiment_model.pkl')
+tfidf = joblib.load('../models/tfidf_vectorizer.pkl')
+
 stop_words = set(stopwords.words('english'))
-
-model = joblib.load('models/sentiment_model.pkl')
-tfidf = joblib.load('models/tfidf_vectorizer.pkl')
-
-lime_explainer = LimeTextExplainer(class_names=['Negative', 'Positive'])
+lemmatizer = WordNetLemmatizer()
 
 def clean_text(text):
     text = re.sub(r'<.*?>', ' ', text)
@@ -21,354 +20,253 @@ def clean_text(text):
     text = text.lower()
     words = text.split()
     words = [w for w in words if w not in stop_words]
+    words = [lemmatizer.lemmatize(w) for w in words]
     return ' '.join(words)
-
-def predict_sentiment(text):
-    cleaned = clean_text(text)
-    lemmatized = ' '.join([lemmatizer.lemmatize(w) for w in cleaned.split()])
-    vec = tfidf.transform([lemmatized])
-    pred = model.predict(vec)[0]
-    prob = model.predict_proba(vec)[0]
-    return ('Positive' if pred == 1 else 'Negative'), max(prob) * 100
-
-def predict_proba_for_lime(texts):
-    cleaned = [' '.join([lemmatizer.lemmatize(w) for w in clean_text(t).split()]) for t in texts]
-    vecs = tfidf.transform(cleaned)
-    return model.predict_proba(vecs)
-
-st.set_page_config(page_title="Sentiment AI", page_icon="🎬", layout="centered")
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
+html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+
+@keyframes bgMove {
+    0%   { background-position: 0% 0%, 100% 100%; }
+    50%  { background-position: 100% 50%, 0% 50%; }
+    100% { background-position: 0% 0%, 100% 100%; }
 }
-
-/* ---- Page load animation ---- */
 .stApp {
-    background: linear-gradient(180deg, #fbfbfe 0%, #f4f3fb 100%);
-    animation: pageFadeIn 0.6s ease;
+    background:
+        radial-gradient(circle at 15% 15%, rgba(240,180,41,0.08), transparent 42%),
+        radial-gradient(circle at 85% 85%, rgba(220,38,38,0.10), transparent 45%),
+        #0c0806;
+    background-size: 200% 200%, 200% 200%, 100% 100%;
+    animation: bgMove 22s ease-in-out infinite;
 }
 
-@keyframes pageFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding-top: 2.5rem; max-width: 100%; padding-left: 4rem; padding-right: 4rem; }
 
-.block-container {
-    animation: pageSlideUp 0.5s cubic-bezier(.16,1,.3,1);
-}
-
-@keyframes pageSlideUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* ---- Logo (SVG icon, not emoji) ---- */
-.logo-wrap {
-    text-align: center;
-    margin-top: 10px;
-    margin-bottom: 4px;
-}
-
-.logo-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 24px;
+.hero { text-align: center; padding-bottom: 30px; }
+.hero-badge {
+    display: inline-block;
+    background: rgba(240,180,41,0.1);
+    border: 1px solid rgba(240,180,41,0.35);
+    color: #f0b429;
+    padding: 8px 22px;
     border-radius: 999px;
-    background: #4338ca;
-}
-
-.logo-badge svg { display: block; }
-
-.logo-badge span {
-    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
     font-weight: 700;
-    font-size: 1.3rem;
-    color: white;
-    letter-spacing: -0.02em;
+    letter-spacing: 1.8px;
+    margin-bottom: 20px;
 }
+.hero-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 64px;
+    font-weight: 800;
+    color: #f5efe6;
+    margin: 0;
+}
+.hero-sub { color: #b3a794; font-size: 19px; margin-top: 12px; font-weight: 500; }
 
-.subtitle {
+.stats-row { display: flex; justify-content: center; gap: 18px; margin-top: 28px; flex-wrap: wrap; }
+.stat-pill {
+    background: rgba(240,180,41,0.05);
+    border: 1px solid rgba(240,180,41,0.18);
+    border-radius: 14px;
+    padding: 16px 30px;
     text-align: center;
-    color: #6b7280;
-    font-size: 1rem;
-    font-weight: 500;
-    margin-top: 14px;
-    margin-bottom: 2rem;
+    min-width: 130px;
+    transition: transform 0.2s ease;
+}
+.stat-pill:hover { transform: translateY(-2px); background: rgba(240,180,41,0.09); }
+.stat-value { font-family: 'Poppins', sans-serif; font-size: 26px; font-weight: 800; color: #f0b429; }
+.stat-label { font-size: 12px; color: #b3a794; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; font-weight: 600; }
+
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: rgba(255,255,255,0.02);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(240,180,41,0.15) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.35);
 }
 
-/* ---- Text area ---- */
+.section-label {
+    font-family: 'Poppins', sans-serif;
+    color: #f5efe6; font-size: 20px; font-weight: 700;
+    letter-spacing: 0.5px; margin-bottom: 4px;
+}
+.section-desc { color: #b3a794; font-size: 15px; margin-bottom: 18px; }
+
 div[data-testid="stTextArea"] textarea {
-    border-radius: 16px;
-    border: 1.5px solid #e5e3f7;
-    padding: 18px;
-    font-size: 1.02rem;
-    background: #ffffff;
-    transition: border-color 0.2s ease;
+    background-color: rgba(255,255,255,0.03) !important;
+    color: #f5efe6 !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255,255,255,0.09) !important;
+    padding: 16px !important;
+    font-size: 18px !important;
 }
+div[data-testid="stTextArea"] textarea:focus { border: 1px solid #f0b429 !important; }
 
-div[data-testid="stTextArea"] textarea:focus {
-    border-color: #4338ca;
-    box-shadow: 0 0 0 4px rgba(67,56,202,0.12);
-}
-
-/* ---- Button with click/hover motion ---- */
-.stButton > button {
-    background: #4338ca;
-    color: white;
-    border-radius: 999px;
-    padding: 14px 32px;
-    font-weight: 600;
-    font-size: 1.02rem;
-    border: none;
+.stButton button {
     width: 100%;
-    transition: transform 0.15s cubic-bezier(.4,0,.2,1), background 0.2s ease;
-}
-
-.stButton > button:hover {
-    background: #3730a3;
-    transform: translateY(-2px);
-}
-
-.stButton > button:active {
-    transform: translateY(0px) scale(0.97);
-}
-
-/* ---- Result card ---- */
-.result-card {
-    background: #ffffff;
-    border-radius: 20px;
-    padding: 28px;
-    margin-top: 22px;
-    border: 1px solid #edecf9;
-    animation: cardIn 0.4s cubic-bezier(.16,1,.3,1);
-}
-
-@keyframes cardIn {
-    from { opacity: 0; transform: translateY(14px) scale(0.98); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.sentiment-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.sentiment-positive {
-    color: #059669;
-    font-size: 1.7rem;
-    font-weight: 700;
+    background: linear-gradient(90deg, #dc2626, #f0b429);
+    color: #0c0806;
     font-family: 'Poppins', sans-serif;
-}
-
-.sentiment-negative {
-    color: #dc2626;
-    font-size: 1.7rem;
     font-weight: 700;
-    font-family: 'Poppins', sans-serif;
-}
-
-.confidence-label {
-    color: #9ca3af;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-}
-
-.confidence-value {
-    color: #111827;
-    font-size: 1.5rem;
-    font-weight: 700;
-    font-family: 'Poppins', sans-serif;
-}
-
-/* ---- Word contribution bars ---- */
-.word-row {
-    display: flex;
-    align-items: center;
-    margin: 8px 0;
-    gap: 10px;
-}
-
-.word-label {
-    width: 90px;
-    font-size: 0.88rem;
-    color: #374151;
-    font-weight: 500;
-}
-
-.word-bar {
-    height: 10px;
-    border-radius: 6px;
-    animation: barGrow 0.5s cubic-bezier(.16,1,.3,1);
-    transform-origin: left;
-}
-
-@keyframes barGrow {
-    from { transform: scaleX(0); }
-    to { transform: scaleX(1); }
-}
-
-/* ---- Custom loading animation ---- */
-.custom-loader {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    font-size: 19px;
     padding: 16px 0;
-    color: #4338ca;
-    font-size: 0.92rem;
-    font-weight: 500;
+    border-radius: 12px;
+    border: none;
+    margin-top: 10px;
+    letter-spacing: 0.4px;
+    box-shadow: 0 4px 16px rgba(220,38,38,0.25);
+    transition: all 0.2s ease;
 }
+.stButton button:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(240,180,41,0.35); }
 
-.spinner {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 3px solid #e5e3f7;
-    border-top-color: #4338ca;
-    animation: spin 0.7s linear infinite;
-}
+.result-title { font-family: 'Poppins', sans-serif; font-size: 30px; font-weight: 800; margin: 8px 0 4px 0; text-align: center; }
+.positive-text { color: #4ade80; }
+.negative-text { color: #f87171; }
+.result-sub { color: #b3a794; font-size: 15px; margin-bottom: 18px; text-align: center; }
+.result-icon { font-size: 42px; text-align: center; display: block; margin-bottom: 6px; }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
+.confidence-track { background: rgba(255,255,255,0.06); height: 10px; border-radius: 999px; overflow: hidden; }
+.confidence-fill-pos { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #4ade80, #22c55e); }
+.confidence-fill-neg { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f87171, #ef4444); }
+.confidence-label { color: #b3a794; font-size: 13px; margin-top: 10px; font-weight: 600; letter-spacing: 0.4px; text-align: center; }
 
-/* ---- Sidebar ---- */
-[data-testid="stSidebar"] {
-    background: #fbfbfe;
-    border-right: 1px solid #ece9fd;
+.loading-box { text-align: center; padding: 20px 0; color: #f0b429; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 16px; }
+.loading-dot {
+    display: inline-block; width: 7px; height: 7px; margin: 0 3px;
+    background: #f0b429; border-radius: 50%;
+    animation: dotPulse 1s infinite ease-in-out;
 }
+.loading-dot:nth-child(2) { animation-delay: 0.15s; }
+.loading-dot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes dotPulse { 0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.1); } }
 
-[data-testid="stSidebar"] h3 {
-    color: #4338ca;
-    font-family: 'Poppins', sans-serif;
-}
-
-/* ---- Tabs ---- */
-div[data-testid="stTabs"] button {
-    font-weight: 600;
-    color: #9ca3af;
-    font-family: 'Poppins', sans-serif;
-}
-
-div[data-testid="stTabs"] button[aria-selected="true"] {
-    color: #4338ca;
-}
-
-/* ---- File uploader ---- */
-section[data-testid="stFileUploaderDropzone"] {
-    border-radius: 16px;
-    border: 1.5px dashed #c7c2f0;
-    background: #ffffff;
-}
-
-/* ---- Metric cards ---- */
-div[data-testid="stMetric"] {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 16px;
-    border: 1px solid #edecf9;
-}
+.footer-note { text-align: center; color: #5c5347; font-size: 10.5px; margin-top: 24px; padding-bottom: 16px; }
 </style>
 """, unsafe_allow_html=True)
 
-FILM_ICON = """<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="1"/><path d="M7 6v12M17 6v12M2 10h5M17 10h5M2 14h5M17 14h5"/></svg>"""
-CHECK_ICON = """<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>"""
-X_ICON = """<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>"""
-SEARCH_ICON = """<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4338ca" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>"""
-
-st.markdown(f"""
-<div class="logo-wrap">
-    <div class="logo-badge">
-        {FILM_ICON}
-        <span>Sentiment AI</span>
+st.markdown("""
+<div class="hero">
+    <div class="hero-badge">NLP SENTIMENT ANALYSIS</div>
+    <p class="hero-title">🎬 CineSense</p>
+    <p class="hero-sub">Movie review sentiment predictor · trained on 50,000 IMDB reviews</p>
+    <div class="stats-row">
+        <div class="stat-pill"><div class="stat-value">88.8%</div><div class="stat-label">Accuracy</div></div>
+        <div class="stat-pill"><div class="stat-value">0.889</div><div class="stat-label">F1 Score</div></div>
+        <div class="stat-pill"><div class="stat-value">50K</div><div class="stat-label">Reviews</div></div>
     </div>
 </div>
 """, unsafe_allow_html=True)
-st.markdown('<p class="subtitle">Understand movie reviews at a glance</p>', unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs(["Single Review", "Batch Analysis"])
+with st.container(border=True):
+    st.markdown('<div class="section-label">✍️ Enter a Movie Review</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-desc">Paste or type any movie review below</div>', unsafe_allow_html=True)
+    review_text = st.text_area("Review", height=140, placeholder="e.g. This movie completely blew me away, the acting was phenomenal...", label_visibility="collapsed")
+    predict_clicked = st.button("🔍  Analyze Sentiment")
 
-with tab1:
-    review = st.text_area("", placeholder="Paste a movie review here...", height=130, label_visibility="collapsed")
-    predict_clicked = st.button("Analyze sentiment")
+if predict_clicked:
+    if not review_text.strip():
+        st.warning("Please enter a review first.")
+    else:
+        loading_spot = st.empty()
+        loading_spot.markdown("""
+        <div class="loading-box">
+            Analyzing sentiment
+            <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
+        </div>
+        """, unsafe_allow_html=True)
+        time.sleep(1.0)
+        loading_spot.empty()
 
-    if predict_clicked:
-        if review.strip():
-            sentiment, confidence = predict_sentiment(review)
-            css_class = "sentiment-positive" if sentiment == "Positive" else "sentiment-negative"
-            icon = CHECK_ICON if sentiment == "Positive" else X_ICON
+        cleaned = clean_text(review_text)
+        vectorized = tfidf.transform([cleaned])
+        prediction = model.predict(vectorized)[0]
+        prob = model.predict_proba(vectorized)[0]
 
+        is_positive = prediction == 1
+        icon = "🎉" if is_positive else "💔"
+        title_class = "positive-text" if is_positive else "negative-text"
+        title = "Positive Review" if is_positive else "Negative Review"
+        fill_class = "confidence-fill-pos" if is_positive else "confidence-fill-neg"
+        conf = prob[1] * 100 if is_positive else prob[0] * 100
+
+        with st.container(border=True):
             st.markdown(f"""
-            <div class="result-card">
-                <div class="sentiment-row">
-                    {icon}
-                    <span class="{css_class}">{sentiment}</span>
-                </div>
-                <br>
-                <span class="confidence-label">Confidence</span><br>
-                <span class="confidence-value">{confidence:.1f}%</span>
-            </div>
+            <span class="result-icon">{icon}</span>
+            <div class="result-title {title_class}">{title}</div>
+            <div class="result-sub">Model's read on this review's sentiment</div>
+            <div class="confidence-track"><div class="{fill_class}" style="width:{conf}%;"></div></div>
+            <div class="confidence-label">{conf:.1f}% MODEL CONFIDENCE</div>
             """, unsafe_allow_html=True)
 
-            loader = st.empty()
-            loader.markdown("""
-            <div class="custom-loader">
-                <div class="spinner"></div>
-                <span>Analyzing word contributions...</span>
-            </div>
-            """, unsafe_allow_html=True)
+st.markdown("""
+<div class="footer-note">Built with Streamlit &amp; Scikit-learn · Trained on the IMDB 50K dataset · For educational purposes</div>
+""", unsafe_allow_html=True)
 
-            lime_exp = lime_explainer.explain_instance(review, predict_proba_for_lime, num_features=8)
-            word_scores = lime_exp.as_list()
-            loader.empty()
+# ================= CLICK PARTICLE BURST =================
+components.html("""
+<script>
+const doc = window.parent.document;
 
-            st.markdown(f"""
-            <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-                {SEARCH_ICON}
-                <span style="font-weight:600; font-size:1.05rem; color:#111827; font-family:'Poppins',sans-serif;">Why this prediction?</span>
-            </div>
-            """, unsafe_allow_html=True)
+function burst(rect) {
+    let canvas = doc.getElementById('burstCanvas');
+    if (!canvas) {
+        canvas = doc.createElement('canvas');
+        canvas.id = 'burstCanvas';
+        canvas.style.position = 'fixed';
+        canvas.style.top = '0'; canvas.style.left = '0';
+        canvas.style.width = '100vw'; canvas.style.height = '100vh';
+        canvas.style.pointerEvents = 'none'; canvas.style.zIndex = '99999';
+        doc.body.appendChild(canvas);
+    }
+    canvas.width = window.parent.innerWidth;
+    canvas.height = window.parent.innerHeight;
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    const steps = 40;
+    for (let i = 0; i < steps; i++) {
+        let t = i / steps, x, y;
+        if (t < 0.25) { x = rect.left + (t/0.25)*rect.width; y = rect.top; }
+        else if (t < 0.5) { x = rect.right; y = rect.top + ((t-0.25)/0.25)*rect.height; }
+        else if (t < 0.75) { x = rect.right - ((t-0.5)/0.25)*rect.width; y = rect.bottom; }
+        else { x = rect.left; y = rect.bottom - ((t-0.75)/0.25)*rect.height; }
+        for (let j = 0; j < 2; j++) {
+            particles.push({ x, y, vx: (Math.random()-0.5)*6, vy: (Math.random()-0.5)*6,
+                rot: Math.random()*360, vrot: (Math.random()-0.5)*15, size: Math.random()*5+3, life: 1 });
+        }
+    }
+    let raf = null;
+    function animate() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        particles.forEach(p => {
+            p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.rot += p.vrot; p.life -= 0.02;
+            if (p.life > 0) {
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI/180);
+                ctx.fillStyle = `rgba(240,180,41,${p.life})`;
+                ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
+                ctx.restore();
+            }
+        });
+        particles = particles.filter(p => p.life > 0);
+        if (particles.length > 0) raf = requestAnimationFrame(animate);
+        else ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+    animate();
+}
 
-            max_score = max(abs(s) for _, s in word_scores) if word_scores else 1
-            for word, score in sorted(word_scores, key=lambda x: abs(x[1]), reverse=True):
-                bar_color = "#059669" if score > 0 else "#dc2626"
-                bar_width = min((abs(score) / max_score) * 100, 100)
-                st.markdown(f"""
-                <div class="word-row">
-                    <span class="word-label">{word}</span>
-                    <div class="word-bar" style="background:{bar_color}; width:{bar_width}%;"></div>
-                </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.warning("Please enter a review first.")
-
-with tab2:
-    uploaded = st.file_uploader("Upload a CSV with a 'review' column", type=['csv'])
-    if uploaded:
-        batch_df = pd.read_csv(uploaded)
-        if 'review' in batch_df.columns:
-            batch_df['prediction'], batch_df['confidence'] = zip(*batch_df['review'].apply(
-                lambda x: predict_sentiment(str(x))
-            ))
-            st.dataframe(batch_df[['review', 'prediction', 'confidence']], use_container_width=True)
-
-            fig, ax = plt.subplots(figsize=(5, 3))
-            colors = ['#059669' if v == 'Positive' else '#dc2626' for v in batch_df['prediction'].value_counts().index]
-            batch_df['prediction'].value_counts().plot(kind='bar', ax=ax, color=colors)
-            ax.set_title("Sentiment distribution", fontsize=12, fontweight='bold')
-            ax.spines[['top', 'right']].set_visible(False)
-            st.pyplot(fig)
-        else:
-            st.error("CSV must have a 'review' column")
-
-st.sidebar.markdown("### About")
-st.sidebar.write("TF-IDF (unigrams + bigrams) + tuned Logistic Regression trained on 50,000 IMDB movie reviews. Predictions explained using LIME.")
-st.sidebar.markdown("---")
-st.sidebar.caption("Built as part of AI/ML Internship — Month 1 Project")
+// Event delegation on body: survives Streamlit re-rendering the button on every rerun,
+// and only needs to be attached once, ever, so it fires on every single click.
+if (!doc.body.dataset.burstDelegated) {
+    doc.body.dataset.burstDelegated = "true";
+    doc.body.addEventListener('click', function(e) {
+        const btn = e.target.closest('div.stButton > button');
+        if (!btn) return;
+        burst(btn.getBoundingClientRect());
+    });
+}
+</script>
+""", height=0)

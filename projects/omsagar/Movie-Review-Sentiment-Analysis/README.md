@@ -1,131 +1,92 @@
 # 🎬 Movie Review Sentiment Analysis
 
-A machine learning system that classifies IMDB movie reviews as Positive or Negative, built as part of an AI/ML internship (following earlier House Price Prediction and Diabetes Prediction projects).
+An NLP project that predicts whether a movie review is positive or negative, using the IMDB dataset of 50,000 reviews. Built as my 3rd project, following House Price Prediction (Regression) and Diabetes Prediction (Classification) — this one covers text data and both classical ML and neural network approaches.
+
+---
 
 ## Overview
 
-*   **Type:** Binary text classification
-*   **Dataset:** IMDB 50K Movie Reviews (Kaggle)
-*   **Goal:** Predict sentiment (Positive/Negative) from raw review text
+*   **Type:** NLP / Binary Text Classification
+*   **Dataset:** IMDB Dataset of 50K Movie Reviews (Kaggle)
+*   **Goal:** Predict sentiment (positive/negative) from raw review text
+*   **Rows:** 50,000 reviews, perfectly balanced (25K positive / 25K negative)
 
-## Pipeline
-
-### 1\. Text Preprocessing
-
-*   HTML tag removal, punctuation/number stripping, lowercasing, stopword removal
-*   Lemmatization chosen over stemming — produces real dictionary words, better feature quality
-
-### 2\. Feature Extraction
-
-Compared Bag of Words vs TF-IDF:
-
-| Representation | Accuracy |
-| --- | --- |
-| Bag of Words | 87.02% |
-| TF-IDF | 88.83% |
-
-TF-IDF selected for all further modeling.
-
-### 3\. Model Comparison
-
-| Model | Accuracy | Train Time |
-| --- | --- | --- |
-| Logistic Regression | 88.83% | 1.87s |
-| Linear SVM | 88.35% | 1.83s |
-| Naive Bayes | 85.31% | 0.04s |
-| Random Forest | 84.59% | 52.38s |
-
-### 4\. Tuning
-
-Added bigrams (captures phrases like "not good") + GridSearchCV hyperparameter tuning (best `C=5`) → final accuracy **89.59%**.
-
-## Explainability
-
-Used LIME (Local Interpretable Model-agnostic Explanations) to show which words drive each prediction, making the model interpretable rather than a black box.
-
-## Error Analysis
-
-10.41% misclassification rate. Common failure patterns identified:
-
-*   **Comparison reviews** — reviewer criticizes one thing (e.g. a remake) while praising another (e.g. the original), confusing the bag-of-words representation
-*   **Mid-review sentiment shifts** — reviews that start positive and turn negative (or vice versa); TF-IDF has no concept of word order
-*   **Backhanded compliments / sarcasm** — positive words used in a critical context
-*   **Heavy negative vocabulary describing content, not opinion** — e.g. reviews discussing a film's dark subject matter while rating it positively
-
-These are known limitations of linear bag-of-words models and motivate exploring sequence-aware models.
-
-## Deep Learning Comparison (LSTM)
-
-Trained an LSTM (Embedding + LSTM(64) + Dense) on the same dataset for comparison.
-
-| Model | Test Accuracy |
-| --- | --- |
-| Logistic Regression (TF-IDF + bigrams, tuned) | 89.59% |
-| LSTM | 86.41% |
-
-**Finding:** The LSTM overfit (training accuracy reached 97.7%, validation plateaued at ~86%), while the simpler TF-IDF + Logistic Regression model generalized better. This highlights that on moderately-sized text datasets, well-tuned classical ML can outperform deep learning without heavy regularization or more data — a known and reportable result, not a failure.
-
-**Final model chosen: Logistic Regression (TF-IDF, bigrams, tuned)** — best accuracy, fastest inference, easiest to deploy and explain.
-
-## Model Versioning
-
-Trained models are saved with date-stamped versions in `models/versions/` alongside the production copy in `models/`, so past versions can be compared or rolled back.
-
-## Demo App (Streamlit)
-
-Interactive UI with:
-
-*   Single review prediction with LIME word-contribution visualization
-*   Batch CSV analysis with sentiment distribution chart
-
-Run locally:  
-streamlit run app/app.py
-
-## API (FastAPI)
-
-A REST API wraps the trained model for production use.
-
-*   `GET /` — health check
-*   `POST /predict` — accepts `{"text": "..."}`, returns `{"sentiment": "...", "confidence": ...}`
-*   Interactive docs auto-generated at `/docs` (Swagger UI)
-
-Run locally:
-
-cd api  
-uvicorn main:app --reload
-
-## Docker
-
-The API is fully containerized — runs anywhere with no manual Python setup.  
-docker build -t sentiment-api -f api/Dockerfile .  
-docker run -d -p 8000:8000 --name sentiment-container sentiment-api
-
-Then visit `http://localhost:8000/docs` to test.
+---
 
 ## Tech Stack
 
-Python, scikit-learn, NLTK, TensorFlow/Keras, LIME, FastAPI, Docker, Streamlit, pandas, matplotlib
+Python · pandas, numpy · matplotlib, seaborn, wordcloud · NLTK · scikit-learn · Streamlit
+
+---
 
 ## Project Structure
 
-Movie-Review-Sentiment-Analysis/  
-├── api/  
-│ ├── main.py  
-│ ├── Dockerfile  
-│ └── requirements.txt  
-├── app/  
-│ └── app.py  
-├── data/  
-│ └── IMDB Dataset.csv  
-├── models/  
-│ ├── sentiment\_model.pkl  
-│ ├── tfidf\_vectorizer.pkl  
-│ └── versions/  
-├── notebooks/  
-│ └── sentiment\_analysis.ipynb  
-├── images/  
+```
+Movie-Review-Sentiment-Analysis/
+├── data/          → IMDB Dataset.csv
+├── notebooks/     → full analysis notebook
+├── src/           → reusable scripts
+├── models/        → saved model + TF-IDF vectorizer
+├── images/        → EDA charts, wordclouds, evaluation plots
+├── app/           → Streamlit app
+├── requirements.txt
 └── README.md
+```
 
-## Full Pipeline Summary
+---
 
-Data cleaning → lemmatization → TF-IDF (bigrams) → Logistic Regression (tuned, GridSearchCV) → LIME explainability → error analysis → LSTM comparison → FastAPI → Docker → Streamlit demo
+## What I Did
+
+*   **Explored the data** – confirmed a perfectly balanced dataset, checked review length distribution, and visualized common words per sentiment with wordclouds
+*   **Cleaned the text** – removed HTML tags, punctuation, and stopwords; compared stemming vs lemmatization and used lemmatization for higher-quality output (real words, not truncated stems)
+*   **Converted text to numbers** – compared Bag of Words vs TF-IDF; TF-IDF performed better (88.8% vs 87.0% accuracy) and was used going forward
+*   **Trained and compared 4 classical models** – Logistic Regression, Naive Bayes, SVM, and Random Forest
+*   **Tested a neural network** (scikit-learn's MLPClassifier) as a deep learning-style comparison alongside the classical models
+*   **Tuned the best model** with GridSearchCV
+*   **Checked which words drive predictions** – "great," "excellent," "perfect" push positive; "worst," "waste," "awful" push negative — confirms the model learned real sentiment signals, not noise
+*   **Deployed as a Streamlit app** – paste any review, get an instant sentiment prediction with a confidence score
+
+---
+
+## Results
+
+| Model | Accuracy | F1 |
+| --- | --- | --- |
+| **Logistic Regression (tuned)** | **0.888** | **0.889** |
+| SVM (Linear) | 0.884 | 0.884 |
+| Neural Network (MLP) | 0.872 | 0.873 |
+| Naive Bayes | 0.853 | 0.854 |
+| Random Forest | 0.846 | 0.844 |
+
+Random Forest was also by far the slowest to train (~4.5 minutes vs ~1-2 seconds for Logistic Regression) with no accuracy benefit — a good example of why simpler models often win on high-dimensional text data.
+
+---
+
+## Visualizations
+
+![Class Balance](images/class_balance.png)  
+![Wordclouds](images/wordclouds.png)  
+![Top Predictive Words](images/top_words.png)
+
+---
+
+## How to Run
+
+```
+git clone https://github.com/omsagarmandal/Movie-Review-Sentiment-Analysis.git
+cd Movie-Review-Sentiment-Analysis
+pip install -r requirements.txt
+cd app
+streamlit run app.py
+```
+
+---
+
+## Note
+
+This is a learning project. Predictions reflect patterns in the IMDB dataset and won't generalize perfectly to all review styles or domains outside movies.
+
+---
+
+**Om Sagar Mandal**  
+AI/ML Intern
